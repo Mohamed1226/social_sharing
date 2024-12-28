@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-path name="external_files" path="." />
+    <!-- Access to files in the cache directory -->
+    <cache-path name="cache" path="." />
+    <files-path name="internal_files" path="." />
+    <!-- Access to files in the external cache directory -->
+    <external-cache-path name="external_cache" path="." />
+    <files-path name="internal_files" path="." />
+    <!-- Access to files in the app's private files directory -->
+    <files-path name="files" path="." />
+
+    <!-- Access to files in the app's external files directory -->
+    <external-files-path name="external_files" path="." />
+</paths>
