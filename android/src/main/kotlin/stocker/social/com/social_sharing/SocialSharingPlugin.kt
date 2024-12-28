@@ -11,6 +11,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import org.json.JSONObject
 import java.io.File
 
 /** SocialSharingPlugin */
@@ -65,6 +66,24 @@ class SocialSharingPlugin: FlutterPlugin, MethodCallHandler {
         )
         result.success(null)
       }
+
+      "launchSnapchatCamera" -> {
+        val clientId = call.argument<String>("clientId") ?: ""
+        val caption = call.argument<String>("caption") ?: ""
+        val appName = call.argument<String>("appName") ?: ""
+        launchSnapchatCamera(clientId, caption, appName)
+        result.success(null)
+      }
+      "launchSnapchatCameraWithLens" -> {
+        val lensUUID = call.argument<String>("lensUUID") ?: ""
+        val clientId = call.argument<String>("clientId") ?: ""
+        val launchDataMap =
+          call.argument<Map<String, String>>("launchData") ?: emptyMap()
+        val launchData = JSONObject(launchDataMap)
+        launchSnapchatCameraWithLens(lensUUID, clientId, launchData)
+        result.success(null)
+      }
+
       else -> result.notImplemented()
     }
 
@@ -74,6 +93,19 @@ class SocialSharingPlugin: FlutterPlugin, MethodCallHandler {
     channel.setMethodCallHandler(null)
   }
 
+  private fun launchSnapchatCamera(clientId: String, caption: String, appName: String) {
+    val intent = CKLite.shareToCamera(context, clientId, caption, appName)
+    context.startActivity(intent)
+  }
+
+  private fun launchSnapchatCameraWithLens(
+    lensUUID: String,
+    clientId: String,
+    launchData: JSONObject
+  ) {
+    val intent = CKLite.shareToDynamicLens(context, lensUUID, clientId, launchData)
+    context.startActivity(intent)
+  }
 
   private fun shareToTiktok(filePaths: List<String>) {
     val uris = ArrayList<Uri>()
