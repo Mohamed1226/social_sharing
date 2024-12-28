@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'package:permission_handler/permission_handler.dart';
+import 'package:social_sharing/social/airdrop.dart';
 import 'package:social_sharing/social/instgram.dart';
 import 'package:social_sharing/social/snapchat.dart';
 import 'package:social_sharing/social/tiktok.dart';
@@ -65,7 +68,7 @@ class _MyAppState extends State<MyApp> {
               ElevatedButton(
                 onPressed: () async {
                   FilePickerResult? result =
-                  await FilePicker.platform.pickFiles();
+                      await FilePicker.platform.pickFiles();
 
                   if (result != null) {
                     Tiktok.share([result.files.single.path!]);
@@ -76,11 +79,13 @@ class _MyAppState extends State<MyApp> {
               ElevatedButton(
                 onPressed: () async {
                   FilePickerResult? result =
-                  await FilePicker.platform.pickFiles();
+                      await FilePicker.platform.pickFiles();
+                  String clintId = "";
 
+                  /// add you clint id here
                   if (result != null) {
                     SnapChat.shareAsSticker(
-                        clintID: "e40a41de-7196-42b1-a454-e96bff26a61a",
+                        clintID: clintId,
                         stickerPath: result.files.single.path!);
                   }
                 },
@@ -89,7 +94,7 @@ class _MyAppState extends State<MyApp> {
               ElevatedButton(
                 onPressed: () async {
                   FilePickerResult? result =
-                  await FilePicker.platform.pickFiles();
+                      await FilePicker.platform.pickFiles();
 
                   if (result != null) {
                     Instagram.share([result.files.single.path!]);
@@ -97,6 +102,18 @@ class _MyAppState extends State<MyApp> {
                 },
                 child: const Text("share to instagram"),
               ),
+              if(Platform.isIOS)
+                ElevatedButton(
+                  onPressed: () async {
+                    FilePickerResult? result =
+                    await FilePicker.platform.pickFiles();
+
+                    if (result != null) {
+                      AirDrop.share("sharing this text");
+                    }
+                  },
+                  child: const Text("share to airDrop"),
+                ),
             ],
           ),
         ),

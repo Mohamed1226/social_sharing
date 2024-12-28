@@ -62,3 +62,7 @@ you must add  im manifest
         <package android:name="com.snapchat.android" />
 
     </queries>
+
+
+donot forget to add your app id in snapchat account 
+to use add
