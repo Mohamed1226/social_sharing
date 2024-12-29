@@ -15,41 +15,41 @@ public class SocialSharingPlugin: NSObject, FlutterPlugin {
             switch call.method {
             case "addStickerToSnapchat":
                 guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
-                self?.addStickerToSnapchat(args: args, result: result)
+                self.addStickerToSnapchat(args: args, result: result)
 
             case "launchSnapchatPreviewWithImage":
                 guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
-                self?.launchSnapchatPreviewWithImage(args: args, result: result)
+                self.launchSnapchatPreviewWithImage(args: args, result: result)
 
             case "launchSnapchatPreviewWithVideo":
                 guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
-                self?.launchSnapchatPreviewWithVideo(args: args, result: result)
+                self.launchSnapchatPreviewWithVideo(args: args, result: result)
 
             case "launchSnapchatCamera":
                 guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
-                self?.launchSnapchatCamera(args: args, result: result)
+                self.launchSnapchatCamera(args: args, result: result)
 
             case "launchSnapchatCameraWithLens":
                 guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
-                self?.launchSnapchatCameraWithLens(args: args, result: result)
+                self.launchSnapchatCameraWithLens(args: args, result: result)
 
             case "launchSnapchatPreviewWithMultipleFiles":
                 guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
-                self?.launchSnapchatPreviewWithMultipleFiles(args: args, result: result)
+                self.launchSnapchatPreviewWithMultipleFiles(args: args, result: result)
 
             case "shareToTiktok":
                 guard let args = call.arguments as? [String: Any] else {return result(FlutterError(code: "INVALID_ARGUMENT", message: "File paths required", details: nil)) }
-                self?.shareToTikTok(args: args, result : result)
+                self.shareToTikTok(args: args, result : result)
 
 
 
             case "shareToInstagram":
                 guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
-                self?.shareToInstagram(args: args, result: result)
+                self.shareToInstagram(args: args, result: result)
 
             case "airdropShareText":
                 guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
-                self?.airdropShareText(args: args, result: result)
+                self.airdropShareText(args: args, result: result)
 
 
     default:
@@ -204,23 +204,33 @@ public class SocialSharingPlugin: NSObject, FlutterPlugin {
 
 
 
-      private func airdropShareText(args: [String: Any], result: @escaping FlutterResult) {
-          guard let text = args["text"] as? String else {
-              return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Missing required arguments", details: nil))
-          }
+private func airdropShareText(args: [String: Any], result: @escaping FlutterResult) {
+    guard let text = args["text"] as? String else {
+        return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Missing required arguments", details: nil))
+    }
 
-          guard let rootViewController = window?.rootViewController else {
-              result(FlutterError(code: "NO_VIEW_CONTROLLER", message: "Root view controller not found", details: nil))
-              return
-          }
+    var rootViewController: UIViewController?
 
-          let activityController = UIActivityViewController(activityItems: [text], applicationActivities: nil)
-          activityController.popoverPresentationController?.sourceView = rootViewController.view
+    if #available(iOS 13.0, *) {
+        rootViewController = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first?.windows
+            .first(where: { $0.isKeyWindow })?.rootViewController
+    } else {
+        rootViewController = UIApplication.shared.keyWindow?.rootViewController
+    }
 
-          rootViewController.present(activityController, animated: true) {
-              result(nil) // Success
-          }
-      }
+    guard let rootVC = rootViewController else {
+        return result(FlutterError(code: "NO_VIEW_CONTROLLER", message: "Root view controller not found", details: nil))
+    }
+
+    let activityController = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+    activityController.popoverPresentationController?.sourceView = rootVC.view
+
+    rootVC.present(activityController, animated: true) {
+        result(nil) // Success
+    }
+}
 
 
 
