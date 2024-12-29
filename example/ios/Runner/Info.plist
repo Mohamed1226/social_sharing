@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>FLTEnableImpeller</key>
+	<false/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -45,5 +47,25 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+	    <string>tiktokopensdk</string>
+        <string>tiktoksharesdk</string>
+        <string>snssdk1180</string>
+        <string>snssdk1233</string>
+		<string>snapchat</string>
+        <string>bitmoji-sdk</string>
+        <string>itms-apps</string>
+		<string>instagram</string>
+		<string>musically</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>TikTokClientKey</key>
+    <string>awlqib5hm94wu89f</string>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>i need to access library because my core logic depend on that user can share his files to anther apps</string>
 </dict>
 </plist>
