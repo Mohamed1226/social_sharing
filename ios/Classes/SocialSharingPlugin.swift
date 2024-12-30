@@ -1,4 +1,5 @@
 import Flutter
+import Photos
 import UIKit
 import TikTokOpenSDKCore
 import TikTokOpenShareSDK
@@ -131,48 +132,81 @@ public class SocialSharingPlugin: NSObject, FlutterPlugin {
 
 
 
+    private var saveCount = 0
+      private var totalFiles = 0
+      private var saveCompletionResult: FlutterResult?
+
       private func shareToInstagram(args: [String: Any], result: @escaping FlutterResult) {
           guard let filePaths = args["filePaths"] as? [String] else {
-              return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil))
+              return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments. Expected an array of file paths.", details: nil))
           }
 
-          var items: [[String: Any]] = []
+          saveCount = 0
+          totalFiles = filePaths.count
+          saveCompletionResult = result
 
-          // Iterate through each file path and add to the items array
           for filePath in filePaths {
               let fileURL = URL(fileURLWithPath: filePath)
               let fileExtension = fileURL.pathExtension.lowercased()
 
-              if fileExtension == "mp4" || fileExtension == "mov" || fileExtension == "jpg" || fileExtension == "jpeg" || fileExtension == "png" {
-                  // Add the URL to the items array
-                  items.append(["com.instagram.exclusivegramstory": fileURL])
+              if fileExtension == "mp4" {
+                  // Save video to Photos Library
+                  UISaveVideoAtPathToSavedPhotosAlbum(filePath, self, #selector(videoSaveCompleted(_:didFinishSavingWithError:contextInfo:)), nil)
+              } else if fileExtension == "jpg" || fileExtension == "jpeg" || fileExtension == "png" {
+                  // Save image to Photos Library
+                  if let image = UIImage(contentsOfFile: filePath) {
+                      UIImageWriteToSavedPhotosAlbum(image, self, #selector(imageSaveCompleted(_:didFinishSavingWithError:contextInfo:)), nil)
+                  } else {
+                      result(FlutterError(code: "FILE_NOT_FOUND", message: "Image file not found: \(filePath)", details: nil))
+                      return
+                  }
               } else {
-                  return result(FlutterError(code: "INVALID_FILE_TYPE", message: "Unsupported file type: \(filePath)", details: nil))
-              }
-          }
-
-          // Set the items into the UIPasteboard
-          UIPasteboard.general.setItems(items, options: [UIPasteboard.OptionsKey.expirationDate: Date().addingTimeInterval(300)]) // Expire in 5 minutes
-
-          // Create the Instagram Stories URL and open it
-          guard let instagramURL = URL(string: "instagram-stories://share"),
-                UIApplication.shared.canOpenURL(instagramURL) else {
-              return result(FlutterError(code: "INSTAGRAM_NOT_INSTALLED", message: "Instagram is not installed on this device", details: nil))
-          }
-
-          UIApplication.shared.open(instagramURL, options: [:]) { success in
-              if success {
-                  result(nil)
-              } else {
-                  result(FlutterError(code: "OPEN_URL_FAILED", message: "Failed to open Instagram", details: nil))
+                  result(FlutterError(code: "INVALID_FILE_TYPE", message: "Unsupported file type: \(filePath)", details: nil))
+                  return
               }
           }
       }
 
+      // Image save completion handler
+      @objc private func imageSaveCompleted(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+          handleSaveCompletion(error: error)
+      }
 
+      // Video save completion handler
+      @objc private func videoSaveCompleted(_ videoPath: String, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+          handleSaveCompletion(error: error)
+      }
 
+      // Handle save completion for all files
+      private func handleSaveCompletion(error: Error?) {
+          if let error = error {
+              saveCompletionResult?(FlutterError(code: "SAVE_FAILED", message: error.localizedDescription, details: nil))
+              saveCompletionResult = nil
+              return
+          }
 
+          saveCount += 1
+          if saveCount == totalFiles {
+              // All files saved, open Instagram
+              DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { // Add delay for indexing
+                  guard let instagramURL = URL(string: "instagram://share"),
+                        UIApplication.shared.canOpenURL(instagramURL) else {
+                      self.saveCompletionResult?(FlutterError(code: "INSTAGRAM_NOT_INSTALLED", message: "Instagram is not installed", details: nil))
+                      self.saveCompletionResult = nil
+                      return
+                  }
 
+                  UIApplication.shared.open(instagramURL, options: [:]) { success in
+                      if success {
+                          self.saveCompletionResult?(nil) // Successfully opened Instagram
+                      } else {
+                          self.saveCompletionResult?(FlutterError(code: "OPEN_URL_FAILED", message: "Failed to open Instagram", details: nil))
+                      }
+                      self.saveCompletionResult = nil
+                  }
+              }
+          }
+      }
 
 
       private func shareToTikTok(args: [String: Any], result: @escaping FlutterResult) {
@@ -180,24 +214,50 @@ public class SocialSharingPlugin: NSObject, FlutterPlugin {
               return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Missing required arguments", details: nil))
           }
 
-          let localIdentifiers = filePaths.map { URL(fileURLWithPath: $0).absoluteString }
+          let group = DispatchGroup()
+          var assetIdentifiers: [String] = []
 
-          guard !localIdentifiers.isEmpty else {
-              return result(FlutterError(code: "FILES_NOT_FOUND", message: "None of the files exist", details: nil))
+          for filePath in filePaths {
+              group.enter()
+              let fileURL = URL(fileURLWithPath: filePath)
+
+              PHPhotoLibrary.shared().performChanges({
+                  let creationRequest = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: fileURL)
+                  if let placeholder = creationRequest?.placeholderForCreatedAsset {
+                      assetIdentifiers.append(placeholder.localIdentifier)
+                  }
+              }, completionHandler: { success, error in
+                  if let error = error {
+                      print("Error saving video to Photos library: \(error.localizedDescription)")
+                  }
+                  group.leave()
+              })
           }
 
-          let shareRequest = TikTokShareRequest(localIdentifiers: localIdentifiers,
-                                                mediaType: .video,
-                                                redirectURI: "")
-          shareRequest.send { response in
-              guard let shareResponse = response as? TikTokShareResponse else {
-                  return result(FlutterError(code: "TIKTOK_SHARE_FAILED", message: "Failed to share to TikTok", details: nil))
+          group.notify(queue: .main) {
+              guard !assetIdentifiers.isEmpty else {
+                  return result(FlutterError(code: "FILES_NOT_FOUND", message: "Failed to save files to Photos library", details: nil))
               }
 
-              if shareResponse.errorCode == .noError {
-                  result(nil)
-              } else {
-                  result(FlutterError(code: "TIKTOK_SHARE_FAILED", message: "Share failed", details: shareResponse.errorDescription))
+              print("Asset Identifiers: \(assetIdentifiers)")
+
+              let shareRequest = TikTokShareRequest(localIdentifiers: assetIdentifiers,
+                                                    mediaType: .video,
+                                                    redirectURI: "yourapp://tiktok-share")
+
+              shareRequest.send { response in
+                  guard let shareResponse = response as? TikTokShareResponse else {
+                      return result(FlutterError(code: "TIKTOK_SHARE_FAILED", message: "Failed to share to TikTok", details: nil))
+                  }
+
+                  if shareResponse.errorCode == .noError {
+                      print("TikTok share successful!")
+                      result(nil)
+                  } else {
+                      result(FlutterError(code: "TIKTOK_SHARE_FAILED",
+                                          message: "TikTok reported a failure.",
+                                          details: shareResponse.errorDescription))
+                  }
               }
           }
       }
