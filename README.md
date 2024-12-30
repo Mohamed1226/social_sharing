@@ -70,19 +70,7 @@ to use add
 for ios
 add
 
-<key>LSApplicationQueriesSchemes</key>
-<array>
-<string>tiktokopensdk</string>
-<string>tiktoksharesdk</string>
-<string>snssdk1180</string>
-<string>snssdk1233</string>
-<string>snapchat</string>
-<string>bitmoji-sdk</string>
-<string>itms-apps</string>
-<string>instagram</string>
-<string>instagram-stories</string>
-<string>musically</string>
-</array>
+
 
 	<key>UIFileSharingEnabled</key>
 	<true/>
