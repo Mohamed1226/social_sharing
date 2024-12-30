@@ -65,27 +65,28 @@ you must add  im manifest
 
 
 donot forget to add your app id in snapchat account 
+to use add
 
-for ios 
-add in info.plist
+for ios
+add
 
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-	    <string>tiktokopensdk</string>
-        <string>tiktoksharesdk</string>
-        <string>snssdk1180</string>
-        <string>snssdk1233</string>
-		<string>snapchat</string>
-        <string>bitmoji-sdk</string>
-        <string>itms-apps</string>
-		<string>instagram</string>
-		<string>musically</string>
-	</array>
+
+
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>TikTokClientKey</key>
-    <string>your tiktok client key</string>
-    <key>LSSupportsOpeningDocumentsInPlace</key>
+	<string>your tiktok client key</string>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>i need to access library because my core logic depend on that user can share his files to anther apps</string>
+
+    <key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>your tiktok client key</string>
+    </array>
+  </dict>
+</array>
