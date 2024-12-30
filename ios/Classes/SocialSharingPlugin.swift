@@ -149,7 +149,7 @@ public class SocialSharingPlugin: NSObject, FlutterPlugin {
               let fileURL = URL(fileURLWithPath: filePath)
               let fileExtension = fileURL.pathExtension.lowercased()
 
-              if fileExtension == "mp4" {
+              if fileExtension == "mp4" || fileExtension == "mov" || fileExtension == "3gp" || fileExtension == "m4v" || fileExtension == "hevc" {
                   // Save video to Photos Library
                   UISaveVideoAtPathToSavedPhotosAlbum(filePath, self, #selector(videoSaveCompleted(_:didFinishSavingWithError:contextInfo:)), nil)
               } else if fileExtension == "jpg" || fileExtension == "jpeg" || fileExtension == "png" {
