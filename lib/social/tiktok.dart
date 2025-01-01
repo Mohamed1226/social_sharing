@@ -5,9 +5,55 @@ import 'package:flutter/services.dart';
 class Tiktok {
   static const platform = MethodChannel('social_sharing');
 
-  static share(List<String> files) async {
+
+  static shareToTikTokMultiFiles1(
+      {required List<String> files,
+      required String redirectUrl,
+      required String filesType}) async {
     try {
-      await platform.invokeMethod('shareToTiktok', {'filePaths': files});
+      await platform.invokeMethod('shareToTikTokMultiFiles1', {
+        'filePaths': files,
+        "redirectUrl": redirectUrl,
+        "fileType": filesType
+      });
+    } on PlatformException catch (e, s) {
+      log("Failed with error : '${e.message}'. \n $s");
+      throw (e, s);
+    } catch (e, s) {
+      log("Failed with error : '$e'. \n $s");
+      throw (e, s);
+    }
+  }
+
+  static shareToTikTokMultiFiles(
+      {required List<String> files,
+      required String redirectUrl,
+      required String filesType}) async {
+    try {
+      await platform.invokeMethod('shareToTiktokMultiFilesV1', {
+        'filePaths': files,
+        "redirectUrl": redirectUrl,
+        "fileType": filesType
+      });
+    } on PlatformException catch (e, s) {
+      log("Failed with error : '${e.message}'. \n $s");
+      throw (e, s);
+    } catch (e, s) {
+      log("Failed with error : '$e'. \n $s");
+      throw (e, s);
+    }
+  }
+
+  static shareToTiktokOneFile(
+      {required String file,
+      required String redirectUrl,
+      required String filesType}) async {
+    try {
+      await platform.invokeMethod('shareToTiktokOneFile', {
+        'filePath': file,
+        "redirectUrl": redirectUrl,
+        "fileType": filesType
+      });
     } on PlatformException catch (e, s) {
       log("Failed with error : '${e.message}'. \n $s");
       throw (e, s);

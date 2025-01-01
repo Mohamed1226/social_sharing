@@ -71,7 +71,47 @@ class _MyAppState extends State<MyApp> {
                       await FilePicker.platform.pickFiles();
 
                   if (result != null) {
-                    Tiktok.share([result.files.single.path!]);
+                    final fileType = determineFileType(
+                        result.files.map((file) => file.extension).toList());
+                    if (fileType == null) return;
+                    Tiktok.shareToTikTokMultiFiles(
+                        files: result.files.map((file) => file.path!).toList(),
+                        filesType: fileType,
+                        redirectUrl: "yourapp://tiktok-share");
+                  }
+                },
+                child: const Text("share to tiktok"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  FilePickerResult? result =
+                      await FilePicker.platform.pickFiles();
+
+                  if (result != null) {
+                    final fileType = determineFileType(
+                        result.files.map((file) => file.extension).toList());
+                    if (fileType == null) return;
+                    Tiktok.shareToTikTokMultiFiles1(
+                        files: result.files.map((file) => file.path!).toList(),
+                        filesType: fileType,
+                        redirectUrl: "yourapp://tiktok-share");
+                  }
+                },
+                child: const Text("share to tiktok"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  FilePickerResult? result =
+                      await FilePicker.platform.pickFiles();
+
+                  if (result != null) {
+                    final fileType = determineFileType(
+                        result.files.map((file) => file.extension).toList());
+                    if (fileType == null) return;
+                    Tiktok.shareToTiktokOneFile(
+                        file: result.files.single.path!,
+                        filesType: fileType,
+                        redirectUrl: "yourapp://tiktok-share");
                   }
                 },
                 child: const Text("share to tiktok"),
@@ -102,11 +142,11 @@ class _MyAppState extends State<MyApp> {
                 },
                 child: const Text("share to instagram"),
               ),
-              if(Platform.isIOS)
+              if (Platform.isIOS)
                 ElevatedButton(
                   onPressed: () async {
                     FilePickerResult? result =
-                    await FilePicker.platform.pickFiles();
+                        await FilePicker.platform.pickFiles();
 
                     if (result != null) {
                       AirDrop.share("sharing this text");
@@ -119,5 +159,33 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
     );
+  }
+
+  String? determineFileType(List<String?> fileExtensions) {
+    // Supported extensions for images and videos
+    final imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    final videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'flv', 'wmv'];
+
+    bool hasImage = false;
+    bool hasVideo = false;
+
+    for (var extension in fileExtensions) {
+      if (extension == null) continue; // Skip null extensions
+      final ext = extension.toLowerCase();
+
+      if (imageExtensions.contains(ext)) {
+        hasImage = true;
+      } else if (videoExtensions.contains(ext)) {
+        hasVideo = true;
+      }
+    }
+
+    // Return the result based on what types were found
+    if (hasImage && !hasVideo) {
+      return 'image';
+    } else if (hasVideo && !hasImage) {
+      return 'video';
+    }
+    return null;
   }
 }

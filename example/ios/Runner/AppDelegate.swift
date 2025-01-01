@@ -1,6 +1,7 @@
 import UIKit
 import Flutter
-import TikTokOpenSDK
+import TikTokOpenShareSDK
+import TikTokOpenSDKCore
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
   override func application(
@@ -8,25 +9,22 @@ import TikTokOpenSDK
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
-      TikTokOpenSDKApplicationDelegate.sharedInstance().application(application, didFinishLaunchingWithOptions: launchOptions)
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
-    
-    // Legacy support for open URL method (if required)
-    override func application(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) -> Bool {
-        // Handle TikTok SDK
-        if TikTokOpenSDKApplicationDelegate.sharedInstance().application(application, open: url, sourceApplication: sourceApplication, annotation: annotation) {
+
+    override func application(_ app: UIApplication,open url: URL,
+                     options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        if (TikTokURLHandler.handleOpenURL(url)) {
             return true
         }
-
-
         return false
     }
 
-    // Handle URL without source application or annotation (legacy support)
-    override func application(_ application: UIApplication, handleOpen url: URL) -> Bool {
-        if TikTokOpenSDKApplicationDelegate.sharedInstance().application(application, open: url, sourceApplication: nil, annotation: "") {
+    override func application(_ application: UIApplication,
+                     continue userActivity: NSUserActivity,
+                     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+        if (TikTokURLHandler.handleOpenURL(userActivity.webpageURL)) {
             return true
         }
         return false

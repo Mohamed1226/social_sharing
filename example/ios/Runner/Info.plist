@@ -63,7 +63,16 @@
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>TikTokClientKey</key>
-	<string>awlqib5hm94wu89f</string>
+	<string>your tiktok client key</string>
+	    <key>CFBundleURLTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>your tiktok client key</string>
+        </array>
+      </dict>
+    </array>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>

@@ -38,12 +38,19 @@ public class SocialSharingPlugin: NSObject, FlutterPlugin {
                 guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
                 self.launchSnapchatPreviewWithMultipleFiles(args: args, result: result)
 
-            case "shareToTiktok":
+            case "shareToTikTokMultiFiles1":
                 guard let args = call.arguments as? [String: Any] else {return result(FlutterError(code: "INVALID_ARGUMENT", message: "File paths required", details: nil)) }
-                self.shareToTikTok(args: args, result : result)
+                self.shareToTikTokMultiFiles1(args: args, result : result)
 
+            case "shareToTiktokOneFile":
+                guard let args = call.arguments as? [String: Any] else {return result(FlutterError(code: "INVALID_ARGUMENT", message: "File paths required", details: nil)) }
+                self.shareToTiktokOneFile(args: args, result : result)
 
-
+                
+            case "shareToTiktokMultiFilesV1":
+                guard let args = call.arguments as? [String: Any] else {return result(FlutterError(code: "INVALID_ARGUMENT", message: "File paths required", details: nil)) }
+                self.shareToTiktokMultiFilesV1(args: args, result : result)
+                
             case "shareToInstagram":
                 guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
                 self.shareToInstagram(args: args, result: result)
@@ -209,58 +216,190 @@ public class SocialSharingPlugin: NSObject, FlutterPlugin {
       }
 
 
-      private func shareToTikTok(args: [String: Any], result: @escaping FlutterResult) {
-          guard let filePaths = args["filePaths"] as? [String] else {
-              return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Missing required arguments", details: nil))
-          }
+    
+    func shareToTiktokOneFile(args : [String: Any?],result: @escaping FlutterResult) {
+        let videoFile = args["filePath"] as? String
+        let redirectUrl = args["redirectUrl"] as? String
+        let fileType = args["fileType"] as? String
+        let videoData = try? Data(contentsOf:  URL(fileURLWithPath: videoFile!)) as NSData
+        
 
-          let group = DispatchGroup()
-          var assetIdentifiers: [String] = []
+        PHPhotoLibrary.shared().performChanges({
 
-          for filePath in filePaths {
-              group.enter()
-              let fileURL = URL(fileURLWithPath: filePath)
+            let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0];
+            let filePath = "\(documentsPath)/\(Date().description)" + (fileType == "image" ? ".jpeg" : ".mp4")
 
-              PHPhotoLibrary.shared().performChanges({
-                  let creationRequest = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: fileURL)
-                  if let placeholder = creationRequest?.placeholderForCreatedAsset {
-                      assetIdentifiers.append(placeholder.localIdentifier)
-                  }
-              }, completionHandler: { success, error in
-                  if let error = error {
-                      print("Error saving video to Photos library: \(error.localizedDescription)")
-                  }
-                  group.leave()
-              })
-          }
+            videoData!.write(toFile: filePath, atomically: true)
+            if fileType == "image" {
+                PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: URL(fileURLWithPath: filePath))
 
-          group.notify(queue: .main) {
-              guard !assetIdentifiers.isEmpty else {
-                  return result(FlutterError(code: "FILES_NOT_FOUND", message: "Failed to save files to Photos library", details: nil))
-              }
+            }else {
+                PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: URL(fileURLWithPath: filePath))
 
-              print("Asset Identifiers: \(assetIdentifiers)")
+            }
+        },
+        completionHandler: { success, error in
 
-              let shareRequest = TikTokShareRequest(localIdentifiers: assetIdentifiers,
-                                                    mediaType: .video,
-                                                    redirectURI: "yourapp://tiktok-share")
+            if success {
 
-              shareRequest.send { response in
-                  guard let shareResponse = response as? TikTokShareResponse else {
-                      return result(FlutterError(code: "TIKTOK_SHARE_FAILED", message: "Failed to share to TikTok", details: nil))
-                  }
+                let fetchOptions = PHFetchOptions()
 
-                  if shareResponse.errorCode == .noError {
-                      print("TikTok share successful!")
-                      result(nil)
-                  } else {
-                      result(FlutterError(code: "TIKTOK_SHARE_FAILED",
-                                          message: "TikTok reported a failure.",
-                                          details: shareResponse.errorDescription))
-                  }
-              }
-          }
-      }
+                fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+
+                let fetchResult = PHAsset.fetchAssets(with: fileType == "image" ? .image : .video, options: fetchOptions)
+
+                if let lastAsset = fetchResult.firstObject {
+                    let localIdentifier = lastAsset.localIdentifier
+                    let shareRequest = TikTokShareRequest(localIdentifiers: [localIdentifier], mediaType: fileType == "image" ? .image : .video, redirectURI: redirectUrl!)
+                    shareRequest.shareFormat = .normal
+                    DispatchQueue.main.async {
+                        shareRequest.send()
+                        result("success")
+                    }
+                }
+            }
+            else if let error = error {
+
+                print(error.localizedDescription)
+            }
+            else {
+
+                result("Error getting the files!")
+            }
+        })
+    }
+
+
+
+    
+    func shareToTiktokMultiFilesV1(args: [String: Any?], result: @escaping FlutterResult) {
+        guard let filePaths = args["filePaths"] as? [String],
+              let redirectUrl = args["redirectUrl"] as? String,
+              let fileType = args["fileType"] as? String else {
+            result("Invalid arguments")
+            return
+        }
+        
+        PHPhotoLibrary.shared().performChanges({
+            for filePath in filePaths {
+                guard let videoData = try? Data(contentsOf: URL(fileURLWithPath: filePath)) as NSData else {
+                    continue // Skip files that can't be read
+                }
+                
+                let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+                let filePath = "\(documentsPath)/\(Date().description)" + (fileType == "image" ? ".jpeg" : ".mp4")
+                
+                videoData.write(toFile: filePath, atomically: true)
+                
+                if fileType == "image" {
+                    PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: URL(fileURLWithPath: filePath))
+                } else {
+                    PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: URL(fileURLWithPath: filePath))
+                }
+            }
+        }, completionHandler: { success, error in
+            if success {
+                let fetchOptions = PHFetchOptions()
+                fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+                
+                let fetchResult = PHAsset.fetchAssets(with: fileType == "image" ? .image : .video, options: fetchOptions)
+                
+                var localIdentifiers: [String] = []
+                
+                fetchResult.enumerateObjects { asset, _, _ in
+                    localIdentifiers.append(asset.localIdentifier)
+                }
+                
+                if !localIdentifiers.isEmpty {
+                    let shareRequest = TikTokShareRequest(
+                        localIdentifiers: localIdentifiers,
+                        mediaType: fileType == "image" ? .image : .video,
+                        redirectURI: redirectUrl
+                    )
+                    shareRequest.shareFormat = .normal
+                    
+                    DispatchQueue.main.async {
+                        shareRequest.send()
+                        result("success")
+                    }
+                } else {
+                    result("No assets found to share!")
+                }
+            } else if let error = error {
+                print(error.localizedDescription)
+                result("Error: \(error.localizedDescription)")
+            } else {
+                result("Unknown error occurred!")
+            }
+        })
+    }
+
+    
+    
+    private func shareToTikTokMultiFiles1(args: [String: Any], result: @escaping FlutterResult) {
+        guard let filePaths = args["filePaths"] as? [String],
+              let redirectUrl = args["redirectUrl"] as? String,
+              let fileTypeString = args["fileType"] as? String else {
+            return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Missing required arguments", details: nil))
+        }
+
+        // Determine media type from the fileType argument
+        let mediaType: TikTokShareMediaType = (fileTypeString.lowercased() == "image") ? .image : .video
+
+        let group = DispatchGroup()
+        var assetIdentifiers: [String] = []
+
+        for filePath in filePaths {
+            group.enter()
+            let fileURL = URL(fileURLWithPath: filePath)
+
+            PHPhotoLibrary.shared().performChanges({
+                if mediaType == .image {
+                    let creationRequest = PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: fileURL)
+                    if let placeholder = creationRequest?.placeholderForCreatedAsset {
+                        assetIdentifiers.append(placeholder.localIdentifier)
+                    }
+                } else {
+                    let creationRequest = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: fileURL)
+                    if let placeholder = creationRequest?.placeholderForCreatedAsset {
+                        assetIdentifiers.append(placeholder.localIdentifier)
+                    }
+                }
+            }, completionHandler: { success, error in
+                if let error = error {
+                    print("Error saving \(mediaType == .image ? "image" : "video") to Photos library: \(error.localizedDescription)")
+                }
+                group.leave()
+            })
+        }
+
+        group.notify(queue: .main) {
+            guard !assetIdentifiers.isEmpty else {
+                return result(FlutterError(code: "FILES_NOT_FOUND", message: "Failed to save files to Photos library", details: nil))
+            }
+
+            print("Asset Identifiers: \(assetIdentifiers)")
+
+            let shareRequest = TikTokShareRequest(localIdentifiers: assetIdentifiers,
+                                                  mediaType: mediaType,
+                                                  redirectURI: redirectUrl)
+
+            shareRequest.send { response in
+                guard let shareResponse = response as? TikTokShareResponse else {
+                    return result(FlutterError(code: "TIKTOK_SHARE_FAILED", message: "Failed to share to TikTok", details: nil))
+                }
+
+                if shareResponse.errorCode == .noError {
+                    print("TikTok share successful!")
+                    result(nil)
+                } else {
+                    result(FlutterError(code: "TIKTOK_SHARE_FAILED",
+                                        message: "TikTok reported a failure.",
+                                        details: shareResponse.errorDescription))
+                }
+            }
+        }
+    }
 
 
 

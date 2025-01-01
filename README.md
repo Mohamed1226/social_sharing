@@ -67,11 +67,21 @@ you must add  im manifest
 donot forget to add your app id in snapchat account 
 to use add
 
-for ios
-add
+for ios tiktok you need to
 
+ceate app in tiktok developer
 
+and add share kit in your products
+then add
 
+in info.plist
+<key>LSApplicationQueriesSchemes</key>
+<array>
+<string>tiktokopensdk</string>
+<string>tiktoksharesdk</string>
+<string>snssdk1180</string>
+<string>snssdk1233</string>
+</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>TikTokClientKey</key>
@@ -90,3 +100,24 @@ add
     </array>
   </dict>
 </array>
+
+also
+
+in delegate 
+
+    override func application(_ app: UIApplication,open url: URL,
+                     options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        if (TikTokURLHandler.handleOpenURL(url)) {
+            return true
+        }
+        return false
+    }
+    
+    override func application(_ application: UIApplication,
+                     continue userActivity: NSUserActivity,
+                     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+        if (TikTokURLHandler.handleOpenURL(userActivity.webpageURL)) {
+            return true
+        }
+        return false
+    }
