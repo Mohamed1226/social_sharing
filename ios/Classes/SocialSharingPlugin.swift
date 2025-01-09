@@ -59,6 +59,10 @@ public class SocialSharingPlugin: NSObject, FlutterPlugin {
                 guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
                 self.airdropShareText(args: args, result: result)
 
+            case "airdropShareTextV1":
+                guard let args = call.arguments as? [String: Any] else { return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil)) }
+                self.airdropShareText1(args: args, result: result)
+
 
     default:
       result(FlutterMethodNotImplemented)
@@ -424,6 +428,27 @@ private func airdropShareText(args: [String: Any], result: @escaping FlutterResu
     }
 
     let activityController = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+
+    // Exclude all activity types except AirDrop
+    activityController.excludedActivityTypes = [
+        .postToFacebook,
+        .postToTwitter,
+        .postToWeibo,
+        .message,
+        .mail,
+        .print,
+        .copyToPasteboard,
+        .assignToContact,
+        .saveToCameraRoll,
+        .addToReadingList,
+        .postToFlickr,
+        .postToVimeo,
+        .postToTencentWeibo,
+        .airDrop, // Explicitly include AirDrop (optional)
+        .openInIBooks,
+        .markupAsPDF
+    ].filter { $0 != .airDrop } // Keep only AirDrop
+
     activityController.popoverPresentationController?.sourceView = rootVC.view
 
     rootVC.present(activityController, animated: true) {
@@ -431,6 +456,39 @@ private func airdropShareText(args: [String: Any], result: @escaping FlutterResu
     }
 }
 
+private func airdropShareText1(args: [String: Any], result: @escaping FlutterResult) {
+    guard let text = args["text"] as? String else {
+        return result(FlutterError(code: "INVALID_ARGUMENTS", message: "Missing required arguments", details: nil))
+    }
+
+    var rootViewController: UIViewController?
+
+    if #available(iOS 13.0, *) {
+        rootViewController = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first?.windows
+            .first(where: { $0.isKeyWindow })?.rootViewController
+    } else {
+        rootViewController = UIApplication.shared.keyWindow?.rootViewController
+    }
+
+    guard let rootVC = rootViewController else {
+        return result(FlutterError(code: "NO_VIEW_CONTROLLER", message: "Root view controller not found", details: nil))
+    }
+
+    // Create AirDrop-specific activity type
+    let activityController = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+
+    // Exclude all activities (effectively leaving only AirDrop)
+    activityController.excludedActivityTypes = UIActivity.ActivityType.allCases
+        .filter { $0 != .airDrop }
+
+    activityController.popoverPresentationController?.sourceView = rootVC.view
+
+    rootVC.present(activityController, animated: true) {
+        result(nil) // Success
+    }
+}
 
 
   private func launchSnapchatPreviewWithMultipleFiles(args: [String: Any], result: @escaping FlutterResult) {
