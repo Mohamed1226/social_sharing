@@ -154,6 +154,18 @@ class _MyAppState extends State<MyApp> {
                   },
                   child: const Text("share to airDrop"),
                 ),
+              if (Platform.isIOS)
+                ElevatedButton(
+                  onPressed: () async {
+                    FilePickerResult? result =
+                    await FilePicker.platform.pickFiles();
+
+                    if (result != null) {
+                      AirDrop.share1("sharing this text");
+                    }
+                  },
+                  child: const Text("share to airDrop v1"),
+                ),
             ],
           ),
         ),
