@@ -65,57 +65,42 @@ class _MyAppState extends State<MyApp> {
                 },
                 child: const Text("share to snapchat"),
               ),
-              ElevatedButton(
-                onPressed: () async {
-                  FilePickerResult? result =
-                      await FilePicker.platform.pickFiles();
+              if (Platform.isIOS)
+                ElevatedButton(
+                  onPressed: () async {
+                    FilePickerResult? result =
+                        await FilePicker.platform.pickFiles();
 
-                  if (result != null) {
-                    final fileType = determineFileType(
-                        result.files.map((file) => file.extension).toList());
-                    if (fileType == null) return;
-                    Tiktok.shareToTikTokMultiFiles(
-                        files: result.files.map((file) => file.path!).toList(),
-                        filesType: fileType,
-                        redirectUrl: "yourapp://tiktok-share");
-                  }
-                },
-                child: const Text("share to tiktok"),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  FilePickerResult? result =
-                      await FilePicker.platform.pickFiles();
+                    if (result != null) {
+                      final fileType = determineFileType(
+                          result.files.map((file) => file.extension).toList());
+                      if (fileType == null) return;
+                      Tiktok.shareToIos(
+                          files:
+                              result.files.map((file) => file.path!).toList(),
+                          filesType: fileType,
+                          redirectUrl: "yourapp://tiktok-share");
+                    }
+                  },
+                  child: const Text("share to tiktok"),
+                ),
+              if (Platform.isAndroid)
+                ElevatedButton(
+                  onPressed: () async {
+                    FilePickerResult? result =
+                        await FilePicker.platform.pickFiles();
 
-                  if (result != null) {
-                    final fileType = determineFileType(
-                        result.files.map((file) => file.extension).toList());
-                    if (fileType == null) return;
-                    Tiktok.shareToTikTokMultiFiles1(
-                        files: result.files.map((file) => file.path!).toList(),
-                        filesType: fileType,
-                        redirectUrl: "yourapp://tiktok-share");
-                  }
-                },
-                child: const Text("share to tiktok"),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  FilePickerResult? result =
-                      await FilePicker.platform.pickFiles();
-
-                  if (result != null) {
-                    final fileType = determineFileType(
-                        result.files.map((file) => file.extension).toList());
-                    if (fileType == null) return;
-                    Tiktok.shareToTiktokOneFile(
-                        file: result.files.single.path!,
-                        filesType: fileType,
-                        redirectUrl: "yourapp://tiktok-share");
-                  }
-                },
-                child: const Text("share to tiktok"),
-              ),
+                    if (result != null) {
+                      final fileType = determineFileType(
+                          result.files.map((file) => file.extension).toList());
+                      if (fileType == null) return;
+                      Tiktok.shareToAndroid(
+                        result.files.map((file) => file.path!).toList(),
+                      );
+                    }
+                  },
+                  child: const Text("share to tiktok"),
+                ),
               ElevatedButton(
                 onPressed: () async {
                   FilePickerResult? result =
@@ -145,26 +130,9 @@ class _MyAppState extends State<MyApp> {
               if (Platform.isIOS)
                 ElevatedButton(
                   onPressed: () async {
-                    FilePickerResult? result =
-                        await FilePicker.platform.pickFiles();
-
-                    if (result != null) {
                       AirDrop.share("sharing this text");
-                    }
                   },
                   child: const Text("share to airDrop"),
-                ),
-              if (Platform.isIOS)
-                ElevatedButton(
-                  onPressed: () async {
-                    FilePickerResult? result =
-                    await FilePicker.platform.pickFiles();
-
-                    if (result != null) {
-                      AirDrop.share1("sharing this text");
-                    }
-                  },
-                  child: const Text("share to airDrop v1"),
                 ),
             ],
           ),
